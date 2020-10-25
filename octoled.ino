@@ -16,23 +16,15 @@
 #define RING_PIN_2 4
 #define LIT_RING_QUANTITY NUM_RINGS/8
 
-// holder for all leds
-CRGB leds[NUM_RINGS * NUM_LEDS_PER_RING];
-
-// array of rings
+// array of rings (CRGBArray objects)
 CRGBArray<NUM_LEDS_PER_RING> rings[NUM_RINGS];
 
 // stack of lit rings to fade out on interval
-int lit_stack[NUM_RINGS];
-
-// flawed idea to setup pins based on var not constant
-int ring_pins[NUM_PINS] = {
-  3, 4, 5, 6
-};
+short lit_stack[NUM_RINGS];
 
 // pins to ring map (might use this)
-int ring_map[NUM_PINS][2] = {
-  {0, 7},
+short ring_map[NUM_PINS][2] = {
+  {0, 3},
   {8, 15},
   {16, 23},
   {24, 31}
@@ -40,36 +32,31 @@ int ring_map[NUM_PINS][2] = {
 
 void setup()
 {
+  short x;
   
-  FastLED.addLeds<LED_TYPE, 3, COLOR_ORDER>(rings[0], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 3, COLOR_ORDER>(rings[1], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 3, COLOR_ORDER>(rings[2], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 3, COLOR_ORDER>(rings[3], NUM_LEDS_PER_RING);
+  // first pin
+  for( x = ring_map[0][0] ; x < ring_map[0][1] ; x++ )
+  {
+    FastLED.addLeds<LED_TYPE, 3, COLOR_ORDER>(rings[x], NUM_LEDS_PER_RING);
+  }
 
-  FastLED.addLeds<LED_TYPE, 4, COLOR_ORDER>(rings[4], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 4, COLOR_ORDER>(rings[5], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 4, COLOR_ORDER>(rings[6], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 4, COLOR_ORDER>(rings[7], NUM_LEDS_PER_RING);
+  // second pin 
+  for( x = ring_map[1][0] ; x < ring_map[1][1] ; x++ )
+  {
+    FastLED.addLeds<LED_TYPE, 4, COLOR_ORDER>(rings[x], NUM_LEDS_PER_RING);
+  }
 
-  FastLED.addLeds<LED_TYPE, 5, COLOR_ORDER>(rings[8], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 5, COLOR_ORDER>(rings[9], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 5, COLOR_ORDER>(rings[10], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 5, COLOR_ORDER>(rings[11], NUM_LEDS_PER_RING);
-
-  FastLED.addLeds<LED_TYPE, 6, COLOR_ORDER>(rings[12], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 6, COLOR_ORDER>(rings[13], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 6, COLOR_ORDER>(rings[14], NUM_LEDS_PER_RING);
-  FastLED.addLeds<LED_TYPE, 6, COLOR_ORDER>(rings[15], NUM_LEDS_PER_RING);
-
-  // this doesn't work
-//  for(int ring_pin = 0 ; ring_pin < NUM_PINS ; ring_pin++)
-//  {
-//    for(int ring_number = ring_map[ring_pin][0] ; ring_number <= ring_map[ring_pin][1] ; ring_number++)
-//    {
-//      // cannot use expression in constant expression
-//      FastLED.addLeds<LED_TYPE, ring_pins[ring_pin], COLOR_ORDER>(rings[ring_number], NUM_LEDS_PER_RING);
-//    }
-//  }
+  // third pin 
+  for( x = ring_map[2][0] ; x < ring_map[2][1] ; x++ )
+  {
+    FastLED.addLeds<LED_TYPE, 5, COLOR_ORDER>(rings[x], NUM_LEDS_PER_RING);
+  }
+  
+  // fourth pin 
+  for( x = ring_map[3][0] ; x < ring_map[3][1] ; x++ )
+  {
+    FastLED.addLeds<LED_TYPE, 6, COLOR_ORDER>(rings[x], NUM_LEDS_PER_RING);
+  }
 
   // set master brightness control
   FastLED.setBrightness(BRIGHTNESS);
@@ -83,14 +70,14 @@ void loop()
   // put your main code here, to run repeatedly:
     EVERY_N_MILLISECONDS( 1000/FRAMES_PER_SECOND ) {  } // @todo fade out the rings at random 
     
-    for(int x = 0 ; x < LIT_RING_QUANTITY ; x++)
+    for(short x = 0 ; x < LIT_RING_QUANTITY ; x++)
     {
       // strobe a random ring
       strobeRing( random8(0, NUM_RINGS) );
     }
 }
 
-void strobeRing(uint8_t ringNumber)
+void strobeRing(short ringNumber)
 {
   // @todo Use += operator to fade up to blue
   rings[ringNumber].fill_solid(CRGB::DarkTurquoise);
@@ -100,12 +87,3 @@ void strobeRing(uint8_t ringNumber)
   // fade it out
   rings[ringNumber].fadeToBlackBy(FADE_RATE);
 }
-
-//// lightning simulator
-//void lightning( fract8 chanceOfLightning, int strip) 
-//{
-//  if( random8() < chanceOfLightning) {
-//    leds[strip][ random16(NUM_LEDS) ] += CRGB::White;
-//  }
-//  fadeToBlackBy( leds[strip], NUM_LEDS, FADE_RATE);
-//}
