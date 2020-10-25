@@ -2,21 +2,11 @@
 #include <FastLED.h>
 
 #define LED_TYPE WS2812 // type of LED circuit
-
-// unique to LED spec (I think)
-#define COLOR_ORDER GRB
-
-// rings on the costume 
-#define NUM_RINGS 32
-
-// leds in each ring
-#define NUM_LEDS_PER_RING 6
-
-// needed by some FastLed functions(?)
-#define NUM_LEDS NUM_RINGS * NUM_LEDS_PER_RING
-
-// number of pins to which strips are connected
-#define NUM_PINS 8
+#define COLOR_ORDER GRB // unique to LED spec (I think)
+#define NUM_RINGS 32 // rings on the costume 
+#define NUM_LEDS_PER_RING 6 // leds in each ring
+#define NUM_LEDS NUM_RINGS * NUM_LEDS_PER_RING // needed by some FastLed functions(?)
+#define NUM_PINS 8 // number of pins to which strips are connected
 
 // visual vars
 #define FADE_RATE 250
@@ -24,6 +14,7 @@
 #define FRAMES_PER_SECOND 128
 #define RING_PIN_1 3
 #define RING_PIN_2 4
+#define LIT_RING_QUANTITY NUM_RINGS/8
 
 // holder for all leds
 CRGB leds[NUM_RINGS * NUM_LEDS_PER_RING];
@@ -31,29 +22,20 @@ CRGB leds[NUM_RINGS * NUM_LEDS_PER_RING];
 // array of rings
 CRGBArray<NUM_LEDS_PER_RING> rings[NUM_RINGS];
 
+// stack of lit rings to fade out on interval
 int lit_stack[NUM_RINGS];
 
+// flawed idea to setup pins based on var not constant
 int ring_pins[NUM_PINS] = {
-  3,
-  4,
-  5,
-  6
+  3, 4, 5, 6
 };
 
-// pins to ring map 
+// pins to ring map (might use this)
 int ring_map[NUM_PINS][2] = {
-  {
-    0, 7
-  },
-  {
-    8, 15
-  },
-  {
-    16, 23
-  },
-  {
-    24, 31
-  }
+  {0, 7},
+  {8, 15},
+  {16, 23},
+  {24, 31}
 };
 
 void setup()
@@ -79,6 +61,7 @@ void setup()
   FastLED.addLeds<LED_TYPE, 6, COLOR_ORDER>(rings[14], NUM_LEDS_PER_RING);
   FastLED.addLeds<LED_TYPE, 6, COLOR_ORDER>(rings[15], NUM_LEDS_PER_RING);
 
+  // this doesn't work
 //  for(int ring_pin = 0 ; ring_pin < NUM_PINS ; ring_pin++)
 //  {
 //    for(int ring_number = ring_map[ring_pin][0] ; ring_number <= ring_map[ring_pin][1] ; ring_number++)
@@ -93,26 +76,36 @@ void setup()
 
   // power mgmt
   set_max_power_in_volts_and_milliamps(5, 500);
-  
-//  for(int x = 0 ; x < NUM_RINGS ; x++)
-//  {
-//    for(int y = 0 ; y < NUM_LEDS_PER_RING ; y++)
-//    {
-//      rings[x][y] = leds[x * NUM_LEDS_PER_RING + y];
-//    }
-//  }
-
 }
 
 void loop()
 {
   // put your main code here, to run repeatedly:
-    EVERY_N_MILLISECONDS( 1000/FRAMES_PER_SECOND ) {  } // slowly cycle the "base color" through the rainbow
+    EVERY_N_MILLISECONDS( 1000/FRAMES_PER_SECOND ) {  } // @todo fade out the rings at random 
+    
+    for(int x = 0 ; x < LIT_RING_QUANTITY ; x++)
+    {
+      // strobe a random ring
+      strobeRing( random8(0, NUM_RINGS) );
+    }
 }
 
 void strobeRing(uint8_t ringNumber)
 {
+  // @todo Use += operator to fade up to blue
   rings[ringNumber].fill_solid(CRGB::DarkTurquoise);
+  
   FastLED.delay(FADE_RATE);
+
+  // fade it out
   rings[ringNumber].fadeToBlackBy(FADE_RATE);
 }
+
+//// lightning simulator
+//void lightning( fract8 chanceOfLightning, int strip) 
+//{
+//  if( random8() < chanceOfLightning) {
+//    leds[strip][ random16(NUM_LEDS) ] += CRGB::White;
+//  }
+//  fadeToBlackBy( leds[strip], NUM_LEDS, FADE_RATE);
+//}
