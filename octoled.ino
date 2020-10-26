@@ -9,12 +9,13 @@
 #define NUM_PINS 8 // number of pins to which strips are connected
 
 // visual vars
-#define FADE_RATE 250
+#define FADE_RATE 250 // how fast to fade a ring
 #define BRIGHTNESS 80
 #define FRAMES_PER_SECOND 128
-#define RING_PIN_1 3
-#define RING_PIN_2 4
-#define LIT_RING_QUANTITY NUM_RINGS/8
+//#define RING_PIN_1 3
+//#define RING_PIN_2 4
+#define LIT_RING_QUANTITY NUM_RINGS/8 // how many rings to illuminate on each loop
+#define FADE_RING_QUANTITY NUM_RINGS/3 // how many rings to fade on each loop
 
 // array of rings (CRGBArray objects)
 CRGBArray<NUM_LEDS_PER_RING> rings[NUM_RINGS];
@@ -29,6 +30,8 @@ short ring_map[NUM_PINS][2] = {
   {16, 23},
   {24, 31}
 };
+
+short last_lit = 0; // last index of lit ring
 
 void setup()
 {
@@ -67,23 +70,82 @@ void setup()
 
 void loop()
 {
-  // put your main code here, to run repeatedly:
     EVERY_N_MILLISECONDS( 1000/FRAMES_PER_SECOND ) {  } // @todo fade out the rings at random 
     
-    for(short x = 0 ; x < LIT_RING_QUANTITY ; x++)
+    short x = 0;
+    while(LIT_RING_QUANTITY > x++)
     {
       // strobe a random ring
-      strobeRing( random8(0, NUM_RINGS) );
+      lightRing( random8(0, NUM_RINGS) );
     }
+    
+    x = 0; 
+    while(FADE_RING_QUANTITY > x++)
+    {
+      fadeRandomRing();
+    }
+
 }
 
-void strobeRing(short ringNumber)
+void lightRing(short ringNumber)
 {
   // @todo Use += operator to fade up to blue
   rings[ringNumber].fill_solid(CRGB::DarkTurquoise);
-  
-  FastLED.delay(FADE_RATE);
 
-  // fade it out
-  rings[ringNumber].fadeToBlackBy(FADE_RATE);
+  // queue it to be faded
+  addToLitStack(ringNumber);
+}
+
+void addToLitStack(short ringNumber)
+{
+  short x = 0;
+  short nextAvailable = -1;
+  
+  // check if already exists in stack
+  while(x < LIT_RING_QUANTITY)
+  {
+    if(lit_stack[x] == ringNumber)
+    {
+      // already in stack 
+      return;
+    }
+    if(lit_stack[x] == -1)
+    {
+      nextAvailable = x;
+//      // increase last_lit IF larger than we have now
+//      last_lit = x > last_lit ? x : last_lit;
+    }
+    x++;
+  }
+
+  /**
+   * no spaces left in lit_stack. 
+   * This would only happen if we're lighting rings faster than we're fading them out. 
+   * It should have no consequences as sizeof(lit_stack) is NUM_RINGS and only contains 
+   * distinct ringNumbers, so all rings will be faded eventually.
+   */
+  if(nextAvailable == -1)
+  {
+    Serial.println("no space left in lit_stack");
+    return;
+  }
+  
+  // store in empty spot
+  lit_stack[nextAvailable] = ringNumber;
+  Serial.println(sprintf("storing ring %d in lit_stack[%d]", ringNumber, nextAvailable));
+}
+
+void fadeRandomRing()
+{
+  short x = 0;
+  while(x < FADE_RING_QUANTITY)
+  {
+    if(lit_stack[x] != -1)
+    {
+      rings[lit_stack[x]].fadeToBlackBy(FADE_RATE);
+      lit_stack[x] = -1;
+      return;
+    }
+    x++;
+  }
 }
