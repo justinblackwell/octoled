@@ -6,7 +6,7 @@
 #define NUM_RINGS 32 // rings on the costume 
 #define NUM_LEDS_PER_RING 6 // leds in each ring
 #define NUM_LEDS NUM_RINGS * NUM_LEDS_PER_RING // needed by some FastLed functions(?)
-#define NUM_PINS 8 // number of pins to which strips are connected
+#define NUM_PINS 4 // number of pins to which strips are connected
 
 // visual vars
 #define FADE_RATE 250 // how fast to fade a ring
@@ -87,6 +87,35 @@ void loop()
 
 }
 
+bool inArray(short v, short * ary[])
+{
+  for(int x = 0 ; x < sizeof(ary) ; x++)
+  {
+    if(ary[x] == v) return true;
+  }
+  return false;
+}
+
+short randomUnlitRingNumber()
+{
+  
+}
+
+short nextAvailableUnlitRingNumber()
+{
+  
+}
+
+short randomLitRingNumber()
+{
+  
+}
+
+void lightRandomUnlitRing()
+{
+  
+}
+
 void lightRing(short ringNumber)
 {
   // @todo Use += operator to fade up to blue
@@ -133,6 +162,11 @@ void addToLitStack(short ringNumber)
   // store in empty spot
   lit_stack[nextAvailable] = ringNumber;
   Serial.println(sprintf("storing ring %d in lit_stack[%d]", ringNumber, nextAvailable));
+}
+
+void fadeRing(short ringNumber)
+{
+  
 }
 
 void fadeRandomRing()
